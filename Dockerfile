@@ -1,34 +1,25 @@
-# Usa una imagen base de Node.js
+# Usa una imagen base oficial de Node.js
 FROM node:14
 
-# Instala CUPS y las dependencias necesarias
-RUN apt-get update && apt-get install -y \
-  cups \
-  libcups2-dev
+# Establece el directorio de trabajo en el contenedor
+WORKDIR /usr/src/app
 
-# Establece el directorio de trabajo dentro del contenedor
-WORKDIR /app
-
-# Copia package.json y package-lock.json
+# Copia package.json y package-lock.json para instalar dependencias
 COPY package*.json ./
 
 # Instala las dependencias
 RUN npm install
 
-# Copia el resto de los archivos de la aplicación
+# Copia el resto de la aplicación
 COPY . .
 
-# Copia el script de configuración de impresoras
-COPY configure-printers.sh /configure-printers.sh
+# Instala pdf-to-printer y otras dependencias necesarias
+RUN apt-get update && \
+    apt-get install -y libcups2 libcups2-dev libnss-mdns cups && \
+    npm install -g pdf-to-printer html-pdf
 
-# Asegura permisos de ejecución para el script
-RUN chmod +x /configure-printers.sh
-
-# Exposición del puerto del servicio CUPS (si es necesario)
-EXPOSE 631
-
-# Expone el puerto en el que tu aplicación escucha
+# Expone el puerto en el que la aplicación se ejecuta
 EXPOSE 3000
 
-# Comando para ejecutar tu aplicación Node.js
-CMD /etc/init.d/cups start && /configure-printers.sh && npm start
+# Comando para ejecutar la aplicación
+CMD ["node", "index.js"]

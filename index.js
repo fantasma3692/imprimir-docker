@@ -1,35 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const printer = require('pdf-to-printer');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000; // Usar el puerto definido por la variable de entorno PORT o 10000 como valor predeterminado
 app.use(cors()); 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Función para obtener la lista de impresoras disponibles
-function getPrinters() {
-  return new Promise((resolve, reject) => {
-    const command =  'lpstat -p -d';
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-      } else {
-        const printerList = stdout.split('\n').slice(1).filter(Boolean);
-        resolve(printerList);
-      }
-    });
-  });
-}
 
 // Endpoint para obtener la lista de impresoras disponibles
 app.get('/printers', async (req, res) => {
   try {
-    const printers = await getPrinters();
+    // Utiliza printer.getPrinters() para obtener la lista de impresoras
+    const printers = await printer.getPrinters();
     res.json(printers);
   } catch (error) {
     console.error('Error al obtener las impresoras:', error);
@@ -53,21 +40,15 @@ app.post('/print', async (req, res) => {
     pdf.create(content).toFile(pdfPath, async (err, result) => {
       if (err) return res.status(500).send('Error al crear el PDF');
       
-      const command = `lp -d ${options.printer} ${result.filename}`;
-      
-      // Ejecuta el comando de impresión del propio sistema operativo
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error('Error al imprimir el PDF:', error);
-          res.status(500).send('Error al imprimir el PDF');
-        } else {
-          console.log('Impresión enviada');
-          res.send('Impresión enviada');
-        }
+      try {
+        await printer.print(result.filename, options);
+        res.send('Impresión enviada');
+      } catch (printError) {
+        res.status(500).send('Error al imprimir el PDF');
+      } finally {
         // Elimina el archivo temporal después de imprimir
-        console.log('Eliminando archivo temporal...');
         fs.unlinkSync(result.filename);
-      });
+      }
     });
   } catch (error) {
     res.status(500).send(error.message);
