@@ -15,8 +15,9 @@ COPY . .
 
 # Instala pdf-to-printer y otras dependencias necesarias
 RUN apt-get update && \
-    apt-get install -y libcups2 libcups2-dev libnss-mdns cups && \
+    apt-get install -y libcups2 libcups2-dev cups curl apt-utils && \
     npm install -g pdf-to-printer html-pdf
+
 
 # Expone el puerto en el que la aplicación se ejecuta
 EXPOSE 3000
