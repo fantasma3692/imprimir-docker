@@ -21,9 +21,6 @@ RUN apt-get update && \
 # Arrancar el servicio CUPS
 RUN service cups start
 
-# Añadir una impresora de prueba (puedes modificar esto según tu configuración de impresora)
-RUN lpadmin -p PrinterName -E -v file:///dev/null -m everywhere
-
 # Expone el puerto de la aplicación y CUPS (631 es el puerto por defecto de CUPS)
 EXPOSE 3000 631
 
