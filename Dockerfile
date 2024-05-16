@@ -13,16 +13,13 @@ RUN npm install
 # Copia el resto de la aplicación
 COPY . .
 
-# Instala CUPS y otras dependencias necesarias para pdf-to-printer
+# Instala CUPS y lpr
 RUN apt-get update && \
-    apt-get install -y libcups2 libcups2-dev cups curl apt-utils && \
-    npm install -g pdf-to-printer html-pdf
+    apt-get install -y libcups2 libcups2-dev cups curl apt-utils lpr && \
+    npm install -g html-pdf
 
-# Arrancar el servicio CUPS
-RUN service cups start
-
-# Expone el puerto de la aplicación y CUPS (631 es el puerto por defecto de CUPS)
-EXPOSE 3000 631
+# Expone el puerto en el que la aplicación se ejecuta
+EXPOSE 3000
 
 # Comando para ejecutar la aplicación
 CMD ["sh", "-c", "service cups start && node index.js"]
